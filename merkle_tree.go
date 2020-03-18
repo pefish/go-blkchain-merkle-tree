@@ -35,17 +35,18 @@ type Node struct {
 	C      Content
 }
 
-// 计算节点的hash（一直递归到叶子节点）
+// 计算节点的hash（一直递归到叶子节点）。使用的前序遍历（根结点 ---> 左子树 ---> 右子树）
 func (n *Node) calculateNodeHashFromLeaf() ([]byte, error) {
 	if n.leaf {
 		return n.C.CalculateHash()
 	}
-	rightBytes, err := n.Right.calculateNodeHashFromLeaf()
+
+	leftBytes, err := n.Left.calculateNodeHashFromLeaf()
 	if err != nil {
 		return nil, err
 	}
 
-	leftBytes, err := n.Left.calculateNodeHashFromLeaf()
+	rightBytes, err := n.Right.calculateNodeHashFromLeaf()
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +104,7 @@ func NewMerkleTreeWithHashStrategy(cs []Content, hashStrategy func() hash.Hash) 
 	return t, nil
 }
 
-// 获取某数据在默克尔树中的路径。
+// 获取某数据在默克尔树中的路径(从查询节点到跟节点的路径的相对路径)。
 // 第一个返回结果表示从下往上依次的节点hash值，第二个返回结果表示是左节点还是右节点，0表示左，1表示右
 func (m *MerkleTree) GetMerklePath(content Content) ([][]byte, []int64, error) {
 	for _, current := range m.Leafs {
@@ -171,6 +172,7 @@ func buildWithContent(cs []Content, t *MerkleTree) (*Node, []*Node, error) {
 }
 
 // 递归构建所有非叶子节点
+// nl 树的每一层的所有节点，第一次调用是最后一层，第二次递归则是倒数第二层
 func buildIntermediate(nl []*Node, t *MerkleTree) (*Node, error) {
 	var nodes []*Node
 	for i := 0; i < len(nl); i += 2 {
@@ -281,14 +283,33 @@ func (m *MerkleTree) VerifyContent(content Content) (bool, error) {
 }
 
 func (n *Node) String() string {
-	return fmt.Sprintf("%t %t %v %s", n.leaf, n.dup, n.Hash, n.C)
+	if n.leaf {
+		return fmt.Sprintf("%s, %#v", BufferToHexString(n.Hash, false), n.C)
+	}
+	return BufferToHexString(n.Hash, false)
 }
 
 func (m *MerkleTree) String() string {
-	s := ""
-	for _, l := range m.Leafs {
-		s += fmt.Sprint(l)
-		s += "\n"
+	str := ""
+	m.Root.CurString(&str)
+	return str
+}
+
+// 输出节点前序遍历的打印
+func (m *Node) CurString(str *string) {
+	if m.leaf {
+		*str += fmt.Sprintln(m)
+		return
 	}
-	return s
+	*str += fmt.Sprintln(m)
+	m.Left.CurString(str)
+	m.Right.CurString(str)
+}
+
+func BufferToHexString(data []byte, prefix bool) string {
+	hex := fmt.Sprintf(`%x`, data)
+	if prefix {
+		return `0x` + hex
+	}
+	return hex
 }

@@ -1,27 +1,9 @@
-package go_blkchain_merkle_tree
 
-import (
-	"crypto/md5"
-	"fmt"
-)
+## 默克尔树
 
-type Data struct {
-	s string
-}
+### Quick Start
 
-func (data *Data) CalculateHash() ([]byte, error) {
-	h := md5.New()
-	if _, err := h.Write([]byte(data.s)); err != nil {
-		return nil, err
-	}
-
-	return h.Sum(nil), nil
-}
-
-func (data *Data) Equals(other Content) (bool, error) {
-	return data.s == other.(*Data).s, nil
-}
-
+```golang
 func ExampleGetMerklePath() {
 	data1 := Data{
 		s: `111`,
@@ -53,48 +35,4 @@ func ExampleGetMerklePath() {
 	//
 	// [[188 190 51 101 230 172 149 234 44 3 67 162 57 88 52 221] [93 117 93 74 20 196 221 244 39 64 136 230 170 245 120 64 33 100 199 63 62 169 76 158 55 159 17 13 223 9 42 71]] [1 1]
 }
-
-func ExampleMerkleTree_VerifyTree() {
-	data1 := Data{
-		s: `111`,
-	}
-	data2 := Data{
-		s: `222`,
-	}
-	tree, err := NewMerkleTree([]Content{&data1, &data2})
-	if err != nil {
-		panic(err)
-	}
-	bool_, err := tree.VerifyTree()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(bool_)
-
-	// Output:
-	// true
-}
-
-func ExampleMerkleTree_VerifyContent() {
-	data1 := Data{
-		s: `111`,
-	}
-	data2 := Data{
-		s: `222`,
-	}
-	tree, err := NewMerkleTree([]Content{&data1, &data2})
-	if err != nil {
-		panic(err)
-	}
-	data3 := Data{
-		s: `333`,
-	}
-	bool_, err := tree.VerifyContent(&data3)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(bool_)
-
-	// Output:
-	// false
-}
+```
